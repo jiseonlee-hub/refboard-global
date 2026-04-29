@@ -148,7 +148,7 @@ export default function BoardPage() {
               </button>
             </div>
           ) : (
-            <div style={{ columnCount: 5, columnGap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', alignItems: 'start' }}>
               {filtered.map((img) => (
                 <ImageCard key={img.id} image={img} uploaders={uploaders} onClick={() => setSelectedImage(img)} />
               ))}
