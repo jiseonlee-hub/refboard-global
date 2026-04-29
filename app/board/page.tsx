@@ -63,7 +63,7 @@ export default function BoardPage() {
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2 font-medium text-gray-900">
-          <img src="/logo.png" alt="닥터포헤어" style={{width:'28px',height:'28px',objectFit:'contain'}} />
+          <img src="/logo_b.png" alt="닥터포헤어" style={{width:'28px',height:'28px',objectFit:'contain'}} />
           해외 레퍼런스 보드
         </div>
         <div className="flex-1">
