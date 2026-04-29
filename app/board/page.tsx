@@ -40,8 +40,8 @@ export default function BoardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const uploaders = [...new Set(images.map((i) => i.uploader))]
-  const allTags = [...new Set(images.flatMap((i) => i.tags))]
+  const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
+  const allTags = Array.from(new Set(images.flatMap((i) => i.tags)))
 
   const filtered = images.filter((img) => {
     const q = search.toLowerCase()
