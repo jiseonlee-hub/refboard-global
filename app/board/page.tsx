@@ -122,7 +122,7 @@ export default function BoardPage() {
               </button>
             </div>
           ) : (
-            <div className="grid gap-3" style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))' }}>
+            <div className="grid gap-3" style={{ columnCount: 4, columnGap: '12px' }}>
               {filtered.map((img) => (
                 <ImageCard
                   key={img.id}
