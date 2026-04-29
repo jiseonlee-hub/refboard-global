@@ -42,20 +42,35 @@ export default function ImageCard({ image, uploaders, onClick }: Props) {
           {image.uploader[0]}
         </div>
       </div>
-      {image.tags.length > 0 && (
-        <div className="px-2 py-1.5 flex flex-wrap gap-1">
-          {image.tags.slice(0, 3).map((tag) => (
-            <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColor(tag)}`}>
-              {tag}
-            </span>
-          ))}
-          {image.tags.length > 3 && (
-            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
-              +{image.tags.length - 3}
-            </span>
-          )}
-        </div>
-      )}
+      <div className="px-2 pt-1.5 pb-0.5">
+        {(image.platform || image.brand) && (
+          <div className="flex items-center gap-1 mb-1">
+            {image.platform && (
+              <span className="text-xs text-gray-400 truncate">{image.platform}</span>
+            )}
+            {image.platform && image.brand && (
+              <span className="text-xs text-gray-300">›</span>
+            )}
+            {image.brand && (
+              <span className="text-xs text-gray-600 font-medium truncate">{image.brand}</span>
+            )}
+          </div>
+        )}
+        {image.tags.length > 0 && (
+          <div className="flex flex-wrap gap-1 pb-1.5">
+            {image.tags.slice(0, 3).map((tag) => (
+              <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColor(tag)}`}>
+                {tag}
+              </span>
+            ))}
+            {image.tags.length > 3 && (
+              <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
+                +{image.tags.length - 3}
+              </span>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
