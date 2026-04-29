@@ -42,10 +42,8 @@ export default function ImageCard({ image, uploaders, onClick }: Props) {
           {image.uploader[0]}
         </div>
       </div>
-      <div className="p-2">
-        <p className="text-xs font-medium text-gray-800 truncate">{image.name}</p>
-        <p className="text-xs text-gray-400 mt-0.5">{image.uploader}</p>
-        <div className="flex flex-wrap gap-1 mt-1.5">
+      {image.tags.length > 0 && (
+        <div className="px-2 py-1.5 flex flex-wrap gap-1">
           {image.tags.slice(0, 3).map((tag) => (
             <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColor(tag)}`}>
               {tag}
@@ -57,7 +55,7 @@ export default function ImageCard({ image, uploaders, onClick }: Props) {
             </span>
           )}
         </div>
-      </div>
+      )}
     </div>
   )
 }
