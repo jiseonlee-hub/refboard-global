@@ -62,7 +62,7 @@ export default function BoardPage() {
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2 font-medium text-gray-900">
           <div className="w-2.5 h-2.5 rounded-full bg-blue-500" />
-          팀 레퍼런스 보드
+          닥터포헤어 레퍼런스 보드
         </div>
         <div className="flex-1">
           <input
