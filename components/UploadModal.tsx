@@ -9,8 +9,6 @@ type Props = {
 }
 
 export default function UploadModal({ onClose, onUploaded }: Props) {
-  const [uploader, setUploader] = useState('')
-  const [uploaderInput, setUploaderInput] = useState('')
   const [platform, setPlatform] = useState('')
   const [platformInput, setPlatformInput] = useState('')
   const [brand, setBrand] = useState('')
@@ -22,7 +20,6 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
   const [uploading, setUploading] = useState(false)
   const [progress, setProgress] = useState(0)
   const [error, setError] = useState('')
-  const [existingUploaders, setExistingUploaders] = useState<string[]>([])
   const [existingPlatforms, setExistingPlatforms] = useState<string[]>([])
   const [existingBrands, setExistingBrands] = useState<string[]>([])
   const [existingTags, setExistingTags] = useState<string[]>([])
@@ -30,9 +27,8 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase.from('images').select('uploader, platform, brand, tags')
+      const { data } = await supabase.from('images').select('platform, brand, tags')
       if (data) {
-        setExistingUploaders(Array.from(new Set(data.map((d) => d.uploader).filter(Boolean))))
         setExistingPlatforms(Array.from(new Set(data.map((d) => d.platform).filter(Boolean))))
         setExistingBrands(Array.from(new Set(data.map((d) => d.brand).filter(Boolean))))
         setExistingTags(Array.from(new Set(data.flatMap((d) => d.tags).filter(Boolean))))
@@ -50,13 +46,12 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
   }
 
   const handleSubmit = async () => {
-    if (!uploader.trim()) { setError('이름을 입력해주세요'); return }
     if (files.length === 0) { setError('이미지를 선택해주세요'); return }
     setUploading(true); setError('')
     for (let i = 0; i < files.length; i++) {
       const fd = new FormData()
       fd.append('file', files[i])
-      fd.append('uploader', uploader.trim())
+      fd.append('uploader', '')
       fd.append('platform', platform.trim())
       fd.append('brand', brand.trim())
       fd.append('tags', tags.join(','))
@@ -132,7 +127,6 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
           <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
         </div>
 
-        <PillInput label="이름" value={uploader} onSet={setUploader} inputVal={uploaderInput} setInputVal={setUploaderInput} existing={existingUploaders} />
         <PillInput label="플랫폼" hint="(예: 세포라, 올리브영)" value={platform} onSet={setPlatform} inputVal={platformInput} setInputVal={setPlatformInput} existing={existingPlatforms} />
         <PillInput label="브랜드" hint="(예: 나이키, 라네즈)" value={brand} onSet={setBrand} inputVal={brandInput} setInputVal={setBrandInput} existing={existingBrands} />
 
