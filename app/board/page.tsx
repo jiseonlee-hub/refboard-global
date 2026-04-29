@@ -1,22 +1,22 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase, type Image } from '@/lib/supabase'
 import ImageCard from '@/components/ImageCard'
-import Sidebar from '@/components/Sidebar'
+import GlobalSidebar from '@/components/GlobalSidebar'
 import ImageModal from '@/components/ImageModal'
-import UploadModal from '@/components/UploadModal'
+import GlobalUploadModal from '@/components/GlobalUploadModal'
 
 export default function BoardPage() {
   const [images, setImages] = useState<Image[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
-  const [filterUploader, setFilterUploader] = useState<string | null>(null)
+  const [filterPlatform, setFilterPlatform] = useState<string | null>(null)
+  const [filterCategory, setFilterCategory] = useState<string | null>(null)
   const [filterTag, setFilterTag] = useState<string | null>(null)
   const [selectedImage, setSelectedImage] = useState<Image | null>(null)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [copied, setCopied] = useState(false)
-  const searchRef = useRef<HTMLInputElement>(null)
 
   const fetchImages = async () => {
     const { data } = await supabase
@@ -38,18 +38,20 @@ export default function BoardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
-  const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
-  const allTags = Array.from(new Set(images.flatMap((i) => i.tags))).sort((a, b) => a.localeCompare(b, 'ko'))
-
   const filtered = images.filter((img) => {
     const q = search.toLowerCase()
     const matchSearch = !q || img.name.toLowerCase().includes(q) ||
       img.uploader.toLowerCase().includes(q) ||
+      img.platform.toLowerCase().includes(q) ||
+      img.category.toLowerCase().includes(q) ||
       img.tags.some((t) => t.toLowerCase().includes(q))
-    const matchUploader = !filterUploader || img.uploader === filterUploader
+    const matchPlatform = !filterPlatform || img.platform === filterPlatform
+    const matchCategory = !filterCategory || img.category === filterCategory
     const matchTag = !filterTag || img.tags.includes(filterTag)
-    return matchSearch && matchUploader && matchTag
+    return matchSearch && matchPlatform && matchCategory && matchTag
   })
+
+  const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
 
   const copyLink = () => {
     navigator.clipboard.writeText(window.location.href)
@@ -61,14 +63,13 @@ export default function BoardPage() {
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <div className="flex items-center gap-2 font-medium text-gray-900">
-          <img src="/logo.png" alt="닥터포헤어" style={{width:"28px",height:"28px",objectFit:"contain"}} />
-          닥터포헤어 레퍼런스 보드
+          <img src="/logo.png" alt="닥터포헤어" style={{width:'28px',height:'28px',objectFit:'contain'}} />
+          해외 레퍼런스 보드
         </div>
         <div className="flex-1">
           <input
-            ref={searchRef}
             type="text"
-            placeholder="이미지, 태그, 업로더로 검색..."
+            placeholder="플랫폼, 카테고리, 태그로 검색..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full max-w-md px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-gray-400 transition-colors outline-none"
@@ -81,17 +82,20 @@ export default function BoardPage() {
           + 업로드
         </button>
       </header>
+
       <div className="flex flex-1 overflow-hidden">
-        <Sidebar
-          uploaders={uploaders}
-          tags={allTags}
-          filterUploader={filterUploader}
+        <GlobalSidebar
+          images={images}
+          filterPlatform={filterPlatform}
+          filterCategory={filterCategory}
           filterTag={filterTag}
           totalCount={images.length}
-          onSelectUploader={(u) => { setFilterUploader(u); setFilterTag(null) }}
-          onSelectTag={(t) => { setFilterTag(t); setFilterUploader(null) }}
-          onClear={() => { setFilterUploader(null); setFilterTag(null) }}
+          onSelectPlatform={(p) => { setFilterPlatform(p); setFilterCategory(null); setFilterTag(null) }}
+          onSelectPlatformCategory={(p, c) => { setFilterPlatform(p); setFilterCategory(c); setFilterTag(null) }}
+          onSelectTag={(t) => { setFilterTag(t); setFilterPlatform(null); setFilterCategory(null) }}
+          onClear={() => { setFilterPlatform(null); setFilterCategory(null); setFilterTag(null) }}
         />
+
         <main className="flex-1 overflow-y-auto p-4">
           {loading ? (
             <div className="flex items-center justify-center h-64 text-gray-400 text-sm">불러오는 중...</div>
@@ -112,11 +116,20 @@ export default function BoardPage() {
           )}
         </main>
       </div>
+
       {selectedImage && (
-        <ImageModal image={selectedImage} onClose={() => setSelectedImage(null)} onDeleted={fetchImages} />
+        <ImageModal
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          onDeleted={async () => { await fetchImages(); setSelectedImage(null) }}
+        />
       )}
+
       {uploadOpen && (
-        <UploadModal onClose={() => setUploadOpen(false)} onUploaded={() => { setUploadOpen(false); fetchImages() }} />
+        <GlobalUploadModal
+          onClose={() => setUploadOpen(false)}
+          onUploaded={() => { setUploadOpen(false); fetchImages() }}
+        />
       )}
     </div>
   )
