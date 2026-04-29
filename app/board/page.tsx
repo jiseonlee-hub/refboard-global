@@ -39,7 +39,7 @@ export default function BoardPage() {
   }, [])
 
   const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
-  const allTags = Array.from(new Set(images.flatMap((i) => i.tags)))
+  const allTags = Array.from(new Set(images.flatMap((i) => i.tags))).sort((a, b) => a.localeCompare(b, 'ko'))
 
   const filtered = images.filter((img) => {
     const q = search.toLowerCase()
