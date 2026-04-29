@@ -9,6 +9,7 @@ export async function POST(req: NextRequest) {
     const uploader = (formData.get('uploader') as string) || '익명'
     const tagsRaw = formData.get('tags') as string
     const tags = tagsRaw ? tagsRaw.split(',').map((t) => t.trim()).filter(Boolean) : []
+    const memo = (formData.get('memo') as string) || ''
 
     if (!file) return NextResponse.json({ error: '파일이 없습니다' }, { status: 400 })
 
@@ -25,7 +26,7 @@ export async function POST(req: NextRequest) {
 
     const { data, error: dbError } = await supabase
       .from('images')
-      .insert({ name: file.name, url: urlData.publicUrl, uploader, tags })
+      .insert({ name: file.name, url: urlData.publicUrl, uploader, tags, memo })
       .select()
       .single()
 

@@ -11,5 +11,6 @@ export type Image = {
   url: string
   uploader: string
   tags: string[]
+  memo: string
   created_at: string
 }
