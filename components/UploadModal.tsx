@@ -3,10 +3,49 @@
 import { useState, useRef, useEffect } from 'react'
 import { supabase } from '@/lib/supabase'
 
-type Props = {
-  onClose: () => void
-  onUploaded: () => void
+const TAG_COLORS = ['bg-blue-50 text-blue-800','bg-green-50 text-green-800','bg-purple-50 text-purple-800','bg-orange-50 text-orange-800','bg-pink-50 text-pink-800','bg-teal-50 text-teal-800']
+function tagColor(tag: string) { let h = 0; for (const c of tag) h = (h * 31 + c.charCodeAt(0)) % TAG_COLORS.length; return TAG_COLORS[h] }
+
+function PillInput({ label, hint, value, onSet, inputVal, setInputVal, existing }: {
+  label: string; hint?: string; value: string; onSet: (v: string) => void
+  inputVal: string; setInputVal: (v: string) => void; existing: string[]
+}) {
+  const handleAdd = () => { const t = inputVal.trim(); if (t) onSet(t); setInputVal('') }
+  return (
+    <div className="mb-3">
+      <label className="block text-xs text-gray-500 font-medium mb-1.5">
+        {label} {hint && <span className="font-normal text-gray-400">{hint}</span>}
+      </label>
+      {existing.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          {existing.map((v) => (
+            <button key={v} onClick={() => onSet(v)}
+              className={`text-xs px-3 py-1 rounded-full border transition-colors ${value === v ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
+              {v}
+            </button>
+          ))}
+        </div>
+      )}
+      <div className="flex gap-2">
+        <input type="text" value={inputVal} onChange={(e) => setInputVal(e.target.value)}
+          onKeyDown={(e) => { if (e.key === 'Enter') handleAdd() }}
+          placeholder="직접 입력 후 Enter"
+          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none transition-colors" />
+        <button onClick={handleAdd} className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">추가</button>
+      </div>
+      {value && (
+        <div className="flex flex-wrap gap-1.5 mt-2">
+          <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-gray-100 text-gray-700">
+            {value}
+            <button onClick={() => onSet('')} className="opacity-60 hover:opacity-100">×</button>
+          </span>
+        </div>
+      )}
+    </div>
+  )
 }
+
+type Props = { onClose: () => void; onUploaded: () => void }
 
 export default function UploadModal({ onClose, onUploaded }: Props) {
   const [platform, setPlatform] = useState('')
@@ -63,54 +102,11 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
     onUploaded()
   }
 
-  const TAG_COLORS = ['bg-blue-50 text-blue-800','bg-green-50 text-green-800','bg-purple-50 text-purple-800','bg-orange-50 text-orange-800','bg-pink-50 text-pink-800','bg-teal-50 text-teal-800']
-  const tagColor = (tag: string) => { let h = 0; for (const c of tag) h = (h * 31 + c.charCodeAt(0)) % TAG_COLORS.length; return TAG_COLORS[h] }
-
-  const PillInput = ({
-    label, hint, value, onSet, inputVal, setInputVal, existing,
-  }: {
-    label: string; hint?: string; value: string; onSet: (v: string) => void
-    inputVal: string; setInputVal: (v: string) => void; existing: string[]
-  }) => (
-    <div className="mb-3">
-      <label className="block text-xs text-gray-500 font-medium mb-1.5">
-        {label} {hint && <span className="font-normal text-gray-400">{hint}</span>}
-      </label>
-      {existing.length > 0 && (
-        <div className="flex flex-wrap gap-1.5 mb-2">
-          {existing.map((v) => (
-            <button key={v} onClick={() => onSet(v)}
-              className={`text-xs px-3 py-1 rounded-full border transition-colors ${value === v ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-600 hover:bg-gray-50'}`}>
-              {v}
-            </button>
-          ))}
-        </div>
-      )}
-      <div className="flex gap-2">
-        <input type="text" value={inputVal} onChange={(e) => setInputVal(e.target.value)}
-          onKeyDown={(e) => { if (e.key === 'Enter') { const t = inputVal.trim(); if (t) onSet(t); setInputVal('') } }}
-          placeholder={`직접 입력 후 Enter`}
-          className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none transition-colors" />
-        <button onClick={() => { const t = inputVal.trim(); if (t) onSet(t); setInputVal('') }}
-          className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">추가</button>
-      </div>
-      {value && (
-        <div className="flex flex-wrap gap-1.5 mt-2">
-          <span className="text-xs px-2 py-0.5 rounded-full flex items-center gap-1 bg-gray-100 text-gray-700">
-            {value}
-            <button onClick={() => onSet('')} className="opacity-60 hover:opacity-100">×</button>
-          </span>
-        </div>
-      )}
-    </div>
-  )
-
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-md mx-4 p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-base font-medium text-gray-900 mb-4">이미지 업로드</h2>
 
-        {/* 파일 */}
         <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => fileRef.current?.click()}
           className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors mb-4">
           {files.length > 0 ? (
@@ -130,7 +126,6 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
         <PillInput label="플랫폼" hint="(예: 세포라, 올리브영)" value={platform} onSet={setPlatform} inputVal={platformInput} setInputVal={setPlatformInput} existing={existingPlatforms} />
         <PillInput label="브랜드" hint="(예: 나이키, 라네즈)" value={brand} onSet={setBrand} inputVal={brandInput} setInputVal={setBrandInput} existing={existingBrands} />
 
-        {/* 태그 */}
         <div className="mb-3">
           <label className="block text-xs text-gray-500 font-medium mb-1.5">태그</label>
           {existingTags.length > 0 && (
@@ -162,7 +157,6 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
           )}
         </div>
 
-        {/* 메모 */}
         <div className="mb-4">
           <label className="block text-xs text-gray-500 font-medium mb-1">메모 <span className="font-normal text-gray-400">(선택)</span></label>
           <textarea value={memo} onChange={(e) => setMemo(e.target.value)} placeholder="참고 내용, 출처, 활용 방향 등..." rows={2}
