@@ -25,8 +25,8 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
     const fetch = async () => {
       const { data } = await supabase.from('images').select('uploader, tags')
       if (data) {
-        const uploaders = [...new Set(data.map((d) => d.uploader))]
-        const allTags = [...new Set(data.flatMap((d) => d.tags))]
+        const uploaders = Array.from(new Set(data.map((d) => d.uploader)))
+        const allTags = Array.from(new Set(data.flatMap((d) => d.tags)))
         setExistingUploaders(uploaders)
         setExistingTags(allTags)
       }
