@@ -1,0 +1,78 @@
+'use client'
+
+import Image from 'next/image'
+import type { Image as ImageType } from '@/lib/supabase'
+
+const TAG_COLORS = [
+  'bg-blue-50 text-blue-800',
+  'bg-green-50 text-green-800',
+  'bg-purple-50 text-purple-800',
+  'bg-orange-50 text-orange-800',
+  'bg-pink-50 text-pink-800',
+  'bg-teal-50 text-teal-800',
+]
+
+function tagColor(tag: string) {
+  let hash = 0
+  for (const c of tag) hash = (hash * 31 + c.charCodeAt(0)) % TAG_COLORS.length
+  return TAG_COLORS[hash]
+}
+
+const UPLOADER_COLORS = [
+  { bg: '#e6f1fb', text: '#0c447c' },
+  { bg: '#eaf3de', text: '#27500a' },
+  { bg: '#eeedfe', text: '#3c3489' },
+  { bg: '#faece7', text: '#712b13' },
+  { bg: '#faeeda', text: '#633806' },
+]
+
+type Props = {
+  image: ImageType
+  onClick: () => void
+  uploaders?: string[]
+}
+
+export default function ImageCard({ image, onClick, uploaders = [] }: Props) {
+  const idx = uploaders.indexOf(image.uploader) % UPLOADER_COLORS.length
+  const color = UPLOADER_COLORS[Math.max(0, idx)]
+
+  return (
+    <div
+      onClick={onClick}
+      className="border border-gray-200 rounded-xl overflow-hidden cursor-pointer hover:border-gray-400 transition-colors bg-white"
+    >
+      <div className="relative w-full bg-gray-100" style={{ aspectRatio: '4/3' }}>
+        <Image
+          src={image.url}
+          alt={image.name}
+          fill
+          className="object-cover"
+          sizes="200px"
+          unoptimized
+        />
+        <div
+          className="absolute bottom-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium border-2 border-white"
+          style={{ background: color.bg, color: color.text }}
+        >
+          {image.uploader[0]}
+        </div>
+      </div>
+      <div className="p-2">
+        <p className="text-xs font-medium text-gray-800 truncate">{image.name}</p>
+        <p className="text-xs text-gray-400 mt-0.5">{image.uploader}</p>
+        <div className="flex flex-wrap gap-1 mt-1.5">
+          {image.tags.slice(0, 3).map((tag) => (
+            <span key={tag} className={`text-xs px-1.5 py-0.5 rounded-full ${tagColor(tag)}`}>
+              {tag}
+            </span>
+          ))}
+          {image.tags.length > 3 && (
+            <span className="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-400">
+              +{image.tags.length - 3}
+            </span>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
