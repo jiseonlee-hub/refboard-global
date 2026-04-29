@@ -35,12 +35,6 @@ export default function ImageCard({ image, uploaders, onClick }: Props) {
     >
       <div className="relative w-full bg-gray-100">
         <img src={image.url} alt={image.name} className="w-full block" />
-        <div
-          className="absolute bottom-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium border-2 border-white"
-          style={{ background: color.bg, color: color.text }}
-        >
-          {image.uploader[0]}
-        </div>
       </div>
       <div className="px-2 pt-1.5 pb-0.5">
         {(image.platform || image.brand) && (
