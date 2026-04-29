@@ -17,7 +17,7 @@ export function getUploaderColor(uploader: string, uploaders: string[]) {
 }
 
 type HierarchyData = { [platform: string]: { [brand: string]: string[] } }
-type Filter = { type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag'; value: string }
+type Filter = { type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag' | 'brand_tag'; value: string; value2?: string }
 
 type Props = {
   uploaders: string[]
@@ -143,8 +143,8 @@ export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, fil
                                       <TagRenameInput tag={tag} onConfirm={(v) => handleRename(tag, v)} onCancel={() => setEditingTag(null)} />
                                     ) : (
                                       <div className="flex items-center">
-                                        <button onClick={() => onFilter({ type: 'tag', value: tag })}
-                                          className={`flex-1 flex items-center px-2 py-1.5 rounded-lg text-xs ${isActive('tag', tag) ? 'bg-white text-gray-900 font-medium' : 'text-gray-400 hover:bg-white hover:text-gray-700'}`}>
+                                        <button onClick={() => onFilter({ type: 'brand_tag', value: brand, value2: tag })}
+                                          className={`flex-1 flex items-center px-2 py-1.5 rounded-lg text-xs ${filter.type === 'brand_tag' && filter.value === brand && filter.value2 === tag ? 'bg-white text-gray-900 font-medium' : 'text-gray-400 hover:bg-white hover:text-gray-700'}`}>
                                           <span className="truncate"># {tag}</span>
                                         </button>
                                         {hoveredTag === tag && !renaming && (

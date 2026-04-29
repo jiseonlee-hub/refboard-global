@@ -8,8 +8,9 @@ import ImageModal from '@/components/ImageModal'
 import UploadModal from '@/components/UploadModal'
 
 type Filter = {
-  type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag'
+  type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag' | 'brand_tag'
   value: string
+  value2?: string  // brand_tag일 때 tag값
 }
 
 export default function BoardPage() {
@@ -53,6 +54,7 @@ export default function BoardPage() {
     else if (filter.type === 'platform') matchFilter = img.platform === filter.value
     else if (filter.type === 'brand') matchFilter = img.brand === filter.value
     else if (filter.type === 'tag') matchFilter = img.tags.includes(filter.value)
+    else if (filter.type === 'brand_tag') matchFilter = img.brand === filter.value && img.tags.includes(filter.value2 ?? '')
 
     return matchSearch && matchFilter
   })
