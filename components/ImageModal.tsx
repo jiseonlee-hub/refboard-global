@@ -38,8 +38,7 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
     const fetch = async () => {
       const { data } = await supabase.from('images').select('tags')
       if (data) {
-        const all = Array.from(new Set(data.flatMap((d) => d.tags))) as string[]
-        setExistingTags(all)
+        setExistingTags(Array.from(new Set(data.flatMap((d) => d.tags))) as string[])
       }
     }
     fetch()
@@ -81,10 +80,6 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
     }
   }
 
-  const date = new Date(image.created_at).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
-
   const allTags = Array.from(new Set([...existingTags, ...selectedTags]))
 
   return (
@@ -94,21 +89,33 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
           <Image src={image.url} alt={image.name} fill className="object-contain" unoptimized />
         </div>
         <div className="p-4">
-          <div className="flex items-start justify-between gap-2 mb-4">
-            <div>
-              <p className="font-medium text-gray-900 text-sm">{image.name}</p>
-              <p className="text-xs text-gray-400 mt-0.5">{image.uploader} · {date}</p>
+          <div className="flex items-center justify-between gap-2 mb-3">
+            {/* 플랫폼 > 브랜드 */}
+            <div className="flex items-center gap-1.5 min-w-0">
+              {image.platform && (
+                <span className="text-sm text-gray-400 truncate">{image.platform}</span>
+              )}
+              {image.platform && image.brand && (
+                <span className="text-gray-300">›</span>
+              )}
+              {image.brand && (
+                <span className="text-sm font-medium text-gray-900 truncate">{image.brand}</span>
+              )}
             </div>
+            {/* 버튼 */}
             <div className="flex gap-2 flex-shrink-0">
-              <a href={image.url} target="_blank" rel="noopener noreferrer" className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+              <a href={image.url} target="_blank" rel="noopener noreferrer"
+                className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 원본 보기
               </a>
               {!editing && (
-                <button onClick={() => setEditing(true)} className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <button onClick={() => setEditing(true)}
+                  className="text-xs px-3 py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   수정
                 </button>
               )}
-              <button onClick={handleDelete} disabled={deleting} className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
+              <button onClick={handleDelete} disabled={deleting}
+                className="text-xs px-3 py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
                 {deleting ? '삭제 중...' : '삭제'}
               </button>
             </div>
@@ -121,29 +128,22 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
                 {allTags.length > 0 && (
                   <div className="flex flex-wrap gap-1.5 mb-2">
                     {allTags.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => toggleTag(t)}
+                      <button key={t} onClick={() => toggleTag(t)}
                         className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
                           selectedTags.includes(t)
                             ? tagColor(t) + ' border-transparent font-medium'
                             : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
+                        }`}>
                         {t}
                       </button>
                     ))}
                   </div>
                 )}
                 <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
+                  <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)}
                     onKeyDown={(e) => e.key === 'Enter' && addCustomTag()}
                     placeholder="새 태그 입력 후 Enter"
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none"
-                  />
+                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none" />
                   <button onClick={addCustomTag} className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">추가</button>
                 </div>
                 {selectedTags.length > 0 && (
@@ -159,17 +159,15 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
               </div>
               <div>
                 <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">메모</p>
-                <textarea
-                  value={memoInput}
-                  onChange={(e) => setMemoInput(e.target.value)}
-                  rows={2}
-                  placeholder="메모를 입력하세요..."
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none resize-none"
-                />
+                <textarea value={memoInput} onChange={(e) => setMemoInput(e.target.value)}
+                  rows={2} placeholder="메모를 입력하세요..."
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none resize-none" />
               </div>
               <div className="flex gap-2">
-                <button onClick={() => { setEditing(false); setSelectedTags(image.tags); setMemoInput(image.memo || '') }} className="flex-1 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">취소</button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
+                <button onClick={() => { setEditing(false); setSelectedTags(image.tags); setMemoInput(image.memo || '') }}
+                  className="flex-1 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">취소</button>
+                <button onClick={handleSave} disabled={saving}
+                  className="flex-1 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
                   {saving ? '저장 중...' : '저장'}
                 </button>
               </div>
@@ -183,13 +181,10 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
                 </div>
               )}
               {selectedTags.length > 0 && (
-                <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-1.5">태그</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedTags.map((tag) => (
-                      <span key={tag} className={`text-xs px-2 py-1 rounded-full ${tagColor(tag)}`}>{tag}</span>
-                    ))}
-                  </div>
+                <div className="flex flex-wrap gap-1.5">
+                  {selectedTags.map((tag) => (
+                    <span key={tag} className={`text-xs px-2 py-1 rounded-full ${tagColor(tag)}`}>{tag}</span>
+                  ))}
                 </div>
               )}
             </>
