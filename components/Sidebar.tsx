@@ -93,22 +93,7 @@ export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, fil
           <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{totalCount}</span>
         </button>
 
-        {/* 팀원 */}
-        {uploaders.length > 0 && (
-          <>
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide px-2 pt-3 pb-1">팀원</p>
-            {uploaders.map((u) => {
-              const color = getUploaderColor(u, uploaders)
-              return (
-                <button key={u} onClick={() => onFilter({ type: 'uploader', value: u })}
-                  className={`w-full flex items-center gap-2 px-2 py-1.5 rounded-lg text-sm mb-0.5 ${isActive('uploader', u) ? 'bg-white text-gray-900 font-medium' : 'text-gray-500 hover:bg-white hover:text-gray-800'}`}>
-                  <span className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-medium flex-shrink-0" style={{ background: color.bg, color: color.text }}>{u[0]}</span>
-                  <span className="truncate">{u}</span>
-                </button>
-              )
-            })}
-          </>
-        )}
+
 
         {/* 플랫폼 > 브랜드 > 태그 */}
         {Object.keys(hierarchy).length > 0 && (
