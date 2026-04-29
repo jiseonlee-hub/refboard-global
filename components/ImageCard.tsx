@@ -1,7 +1,7 @@
 'use client'
 
-import Image from 'next/image'
 import type { Image as ImageType } from '@/lib/supabase'
+import { getUploaderColor } from './Sidebar'
 
 const TAG_COLORS = [
   'bg-blue-50 text-blue-800',
@@ -18,38 +18,23 @@ function tagColor(tag: string) {
   return TAG_COLORS[hash]
 }
 
-const UPLOADER_COLORS = [
-  { bg: '#e6f1fb', text: '#0c447c' },
-  { bg: '#eaf3de', text: '#27500a' },
-  { bg: '#eeedfe', text: '#3c3489' },
-  { bg: '#faece7', text: '#712b13' },
-  { bg: '#faeeda', text: '#633806' },
-]
-
 type Props = {
   image: ImageType
+  uploaders: string[]
   onClick: () => void
-  uploaders?: string[]
 }
 
-export default function ImageCard({ image, onClick, uploaders = [] }: Props) {
-  const idx = uploaders.indexOf(image.uploader) % UPLOADER_COLORS.length
-  const color = UPLOADER_COLORS[Math.max(0, idx)]
+export default function ImageCard({ image, uploaders, onClick }: Props) {
+  const color = getUploaderColor(image.uploader, uploaders)
 
   return (
     <div
       onClick={onClick}
       className="border border-gray-200 rounded-xl overflow-hidden cursor-pointer hover:border-gray-400 transition-colors bg-white"
+      style={{ breakInside: 'avoid', marginBottom: '12px' }}
     >
-      <div className="relative w-full bg-gray-100" style={{ aspectRatio: '4/3' }}>
-        <Image
-          src={image.url}
-          alt={image.name}
-          fill
-          className="object-cover"
-          sizes="200px"
-          unoptimized
-        />
+      <div className="relative w-full bg-gray-100">
+        <img src={image.url} alt={image.name} className="w-full block" />
         <div
           className="absolute bottom-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium border-2 border-white"
           style={{ background: color.bg, color: color.text }}
