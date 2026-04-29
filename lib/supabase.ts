@@ -13,6 +13,6 @@ export type Image = {
   tags: string[]
   memo: string
   platform: string
-  category: string
+  brand: string
   created_at: string
 }
