@@ -80,7 +80,7 @@ export default function BoardPage() {
     }
   }
   const sortedHierarchy: typeof hierarchy = {}
-  Object.keys(hierarchy).filter(k => k !== '(미분류)').sort().forEach(k => sortedHierarchy[k] = hierarchy[k])
+  Object.keys(hierarchy).filter(k => k !== '(미분류)').sort((a, b) => a.localeCompare(b, 'ko')).forEach(k => { const sortedBrands: typeof hierarchy[string] = {}; Object.keys(hierarchy[k]).filter(b => b !== '(미분류)').sort((a, b) => a.localeCompare(b, 'ko')).forEach(b => { sortedBrands[b] = [...hierarchy[k][b]].sort((a, b) => a.localeCompare(b, 'ko')) }); if (hierarchy[k]['(미분류)']) sortedBrands['(미분류)'] = hierarchy[k]['(미분류)']; sortedHierarchy[k] = sortedBrands })
   if (hierarchy['(미분류)']) sortedHierarchy['(미분류)'] = hierarchy['(미분류)']
 
   const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
