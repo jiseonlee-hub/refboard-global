@@ -23,9 +23,10 @@ type Props = {
   image: ImageType
   onClose: () => void
   onDeleted: () => void
+  onTagClick?: (tag: string) => void
 }
 
-export default function ImageModal({ image, onClose, onDeleted }: Props) {
+export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Props) {
   const [deleting, setDeleting] = useState(false)
   const [editing, setEditing] = useState(false)
   const [selectedTags, setSelectedTags] = useState<string[]>(image.tags)
@@ -89,17 +90,17 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden flex" style={{ maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden flex" style={{ height: '90vh' }} onClick={(e) => e.stopPropagation()}>
 
         {/* 왼쪽: 이미지 영역 */}
-        <div className="relative flex-1 min-w-0 bg-black flex items-center justify-center">
+        <div className="relative flex-1 min-w-0 bg-white flex items-center justify-center" style={{ height: '90vh' }}>
           <Image
             src={image.url}
             alt={image.name}
             width={1200}
             height={900}
-            className="w-full h-auto block"
-            style={{ maxHeight: '90vh', objectFit: 'contain' }}
+            className="w-full h-full"
+            style={{ objectFit: 'contain' }}
             unoptimized
           />
           <button
@@ -204,7 +205,11 @@ export default function ImageModal({ image, onClose, onDeleted }: Props) {
                   <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-1.5">태그</p>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedTags.map((tag) => (
-                      <span key={tag} className={`text-xs px-2 py-1 rounded-full ${tagColor(tag)}`}>{tag}</span>
+                      <span
+                        key={tag}
+                        onClick={() => { onTagClick?.(tag); onClose() }}
+                        className={`text-xs px-2 py-1 rounded-full cursor-pointer hover:opacity-70 transition-opacity ${tagColor(tag)}`}
+                      >{tag}</span>
                     ))}
                   </div>
                 </div>
