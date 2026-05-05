@@ -116,7 +116,7 @@ export default function BoardPage() {
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <button
-          onClick={() => { setFilterUploader(null); setFilterTags([]); setSearch('') }}
+          onClick={() => { handleFilter({ type: 'all', value: '' }); setSearch('') }}
           className="flex items-center gap-2 font-medium text-gray-900 hover:opacity-70 transition-opacity"
         >
           <img src="/logo_b.png" alt="로고" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
