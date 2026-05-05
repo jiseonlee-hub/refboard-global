@@ -1,7 +1,6 @@
 'use client'
 
 import type { Image as ImageType } from '@/lib/supabase'
-import { getUploaderColor } from './Sidebar'
 
 const TAG_COLORS = [
   'bg-blue-50 text-blue-800',
@@ -25,24 +24,27 @@ type Props = {
   onTagClick: (tag: string) => void
 }
 
-export default function ImageCard({ image, uploaders, onClick, onTagClick }: Props) {
-  const color = getUploaderColor(image.uploader, uploaders)
-
+export default function ImageCard({ image, onClick, onTagClick }: Props) {
   return (
     <div
       onClick={onClick}
       className="border border-gray-200 rounded-xl overflow-hidden cursor-pointer hover:border-gray-400 transition-colors bg-white"
       style={{ breakInside: 'avoid', marginBottom: '12px' }}
     >
-      <div className="relative w-full bg-gray-100">
+      <div className="w-full bg-gray-100">
         <img src={image.url} alt={image.name} className="w-full block" />
-        <div
-          className="absolute bottom-2 left-2 w-6 h-6 rounded-full flex items-center justify-center text-xs font-medium border-2 border-white"
-          style={{ background: color.bg, color: color.text }}
-        >
-          {image.uploader[0]}
-        </div>
       </div>
+
+      {/* 브랜드명 */}
+      {(image.brand || image.platform) && (
+        <div className="px-2 pt-1.5">
+          <span className="text-xs text-gray-400 truncate block">
+            {image.brand || image.platform}
+          </span>
+        </div>
+      )}
+
+      {/* 태그 */}
       {image.tags.length > 0 && (
         <div className="px-2 py-1.5 flex flex-wrap gap-1">
           {image.tags.slice(0, 3).map((tag) => (
