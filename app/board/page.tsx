@@ -153,13 +153,13 @@ export default function BoardPage() {
             <div className="flex items-center gap-2 mb-3 flex-wrap">
               {/* 플랫폼/브랜드 필터 뱃지 */}
               {filter.type === 'platform' && (
-                <button onClick={() => handleFilter({ type: 'all', value: '' })}
+                <button onClick={() => setFilter({ type: 'all', value: '' })}
                   className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors">
                   📁 {filter.value} <span className="opacity-70">×</span>
                 </button>
               )}
               {filter.type === 'brand' && (
-                <button onClick={() => handleFilter({ type: 'all', value: '' })}
+                <button onClick={() => setFilter({ type: 'all', value: '' })}
                   className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors">
                   ○ {filter.value} <span className="opacity-70">×</span>
                 </button>
