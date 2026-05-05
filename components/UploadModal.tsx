@@ -69,8 +69,8 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
     const fetchExisting = async () => {
       const { data } = await supabase.from('images').select('platform, brand, tags')
       if (data) {
-        setExistingPlatforms(Array.from(new Set(data.map((d) => d.platform).filter(Boolean))))
-        setExistingBrands(Array.from(new Set(data.map((d) => d.brand).filter(Boolean))))
+        setExistingPlatforms(Array.from(new Set(data.map((d) => d.platform).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'ko')))
+        setExistingBrands(Array.from(new Set(data.map((d) => d.brand).filter(Boolean))).sort((a, b) => a.localeCompare(b, 'ko')))
         setExistingTags(Array.from(new Set(data.flatMap((d) => d.tags).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ko")))
       }
     }
