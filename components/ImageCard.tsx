@@ -22,10 +22,9 @@ type Props = {
   image: ImageType
   uploaders: string[]
   onClick: () => void
-  onTagClick: (tag: string) => void
 }
 
-export default function ImageCard({ image, uploaders, onClick, onTagClick }: Props) {
+export default function ImageCard({ image, uploaders, onClick }: Props) {
   const color = getUploaderColor(image.uploader, uploaders)
 
   return (
@@ -34,7 +33,7 @@ export default function ImageCard({ image, uploaders, onClick, onTagClick }: Pro
       className="border border-gray-200 rounded-xl overflow-hidden cursor-pointer hover:border-gray-400 transition-colors bg-white"
       style={{ breakInside: 'avoid', marginBottom: '12px' }}
     >
- <div className="relative w-full bg-gray-100">
+      <div className="relative w-full bg-gray-100">
         <img src={image.url} alt={image.name} className="w-full block" />
       </div>
       <div className="px-2 pt-1.5 pb-0.5">

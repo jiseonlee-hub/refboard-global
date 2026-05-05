@@ -17,7 +17,7 @@ export function getUploaderColor(uploader: string, uploaders: string[]) {
 }
 
 type HierarchyData = { [platform: string]: { [brand: string]: string[] } }
-type Filter = { type: 'all' | 'uploader' | 'platform' | 'brand'; value: string }
+type Filter = { type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag' | 'brand_tag'; value: string; value2?: string }
 
 type Props = {
   uploaders: string[]
@@ -25,9 +25,7 @@ type Props = {
   allTags: { tag: string; count: number }[]
   totalCount: number
   filter: Filter
-  filterTags: string[]
   onFilter: (f: Filter) => void
-  onToggleTag: (tag: string) => void
   onRenameTag: (oldTag: string, newTag: string) => Promise<void>
 }
 
@@ -67,7 +65,7 @@ function EditIcon() {
   )
 }
 
-export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, filter, filterTags, onFilter, onToggleTag, onRenameTag }: Props) {
+export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, filter, onFilter, onRenameTag }: Props) {
   const [expandedPlatforms, setExpandedPlatforms] = useState<Set<string>>(new Set())
   const [expandedBrands, setExpandedBrands] = useState<Set<string>>(new Set())
   const [editingTag, setEditingTag] = useState<string | null>(null)
@@ -90,12 +88,14 @@ export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, fil
       <div className="p-3">
         <p className="text-xs text-gray-400 font-medium uppercase tracking-wide px-2 py-1">보기</p>
         <button onClick={() => onFilter({ type: 'all', value: '' })}
-          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm mb-0.5 ${filter.type === 'all' && filterTags.length === 0 ? 'bg-white text-gray-900 font-medium' : 'text-gray-500 hover:bg-white hover:text-gray-800'}`}>
+          className={`w-full flex items-center justify-between px-2 py-1.5 rounded-lg text-sm mb-0.5 ${filter.type === 'all' ? 'bg-white text-gray-900 font-medium' : 'text-gray-500 hover:bg-white hover:text-gray-800'}`}>
           <span>전체 이미지</span>
           <span className="text-xs text-gray-400 bg-gray-100 px-1.5 py-0.5 rounded-full">{totalCount}</span>
         </button>
 
-        {/* 플랫폼 > 브랜드 > 태그 계층 */}
+
+
+        {/* 플랫폼 > 브랜드 > 태그 */}
         {Object.keys(hierarchy).length > 0 && (
           <>
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide px-2 pt-3 pb-1">플랫폼</p>
@@ -138,17 +138,22 @@ export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, fil
                             {isBrandOpen && tags.length > 0 && (
                               <div className="pl-5">
                                 {tags.map((tag) => (
-                                  <div key={tag} className="mb-0.5" onMouseEnter={() => setHoveredTag(`brand_${brand}_${tag}`)} onMouseLeave={() => setHoveredTag(null)}>
-                                    <div className="flex items-center">
-                                      <button onClick={() => onToggleTag(tag)}
-                                        className={`flex-1 flex items-center px-2 py-1.5 rounded-lg text-xs transition-colors ${
-                                          filterTags.includes(tag)
-                                            ? 'bg-gray-900 text-white font-medium'
-                                            : 'text-gray-400 hover:bg-white hover:text-gray-700'
-                                        }`}>
-                                        <span className="truncate"># {tag}</span>
-                                      </button>
-                                    </div>
+                                  <div key={tag} className="mb-0.5" onMouseEnter={() => setHoveredTag(tag)} onMouseLeave={() => setHoveredTag(null)}>
+                                    {editingTag === tag ? (
+                                      <TagRenameInput tag={tag} onConfirm={(v) => handleRename(tag, v)} onCancel={() => setEditingTag(null)} />
+                                    ) : (
+                                      <div className="flex items-center">
+                                        <button onClick={() => onFilter({ type: 'brand_tag', value: brand, value2: tag })}
+                                          className={`flex-1 flex items-center px-2 py-1.5 rounded-lg text-xs ${filter.type === 'brand_tag' && filter.value === brand && filter.value2 === tag ? 'bg-white text-gray-900 font-medium' : 'text-gray-400 hover:bg-white hover:text-gray-700'}`}>
+                                          <span className="truncate"># {tag}</span>
+                                        </button>
+                                        {hoveredTag === tag && !renaming && (
+                                          <button onClick={(e) => { e.stopPropagation(); setEditingTag(tag) }} className="flex-shrink-0 w-5 h-5 flex items-center justify-center text-gray-300 hover:text-gray-600 mr-1">
+                                            <EditIcon />
+                                          </button>
+                                        )}
+                                      </div>
+                                    )}
                                   </div>
                                 ))}
                               </div>
@@ -168,30 +173,19 @@ export default function Sidebar({ uploaders, hierarchy, allTags, totalCount, fil
         {allTags.length > 0 && (
           <>
             <div className="border-t border-gray-200 mt-3 mb-1" />
-            <div className="flex items-center justify-between px-2 pt-2 pb-1">
-              <p className="text-xs text-gray-400 font-medium uppercase tracking-wide">
-                태그 <span className="normal-case font-normal">(전체)</span>
-              </p>
-              {filterTags.length > 0 && (
-                <span className="text-xs bg-gray-900 text-white px-1.5 py-0.5 rounded-full">{filterTags.length}</span>
-              )}
-            </div>
+            <p className="text-xs text-gray-400 font-medium uppercase tracking-wide px-2 pt-2 pb-1">
+              태그 <span className="normal-case font-normal">(전체)</span>
+            </p>
             {allTags.map(({ tag, count }) => (
               <div key={tag} className="mb-0.5" onMouseEnter={() => setHoveredTag(`global_${tag}`)} onMouseLeave={() => setHoveredTag(null)}>
                 {editingTag === `global_${tag}` ? (
                   <TagRenameInput tag={tag} onConfirm={(v) => handleRename(tag, v)} onCancel={() => setEditingTag(null)} />
                 ) : (
                   <div className="flex items-center">
-                    <button onClick={() => onToggleTag(tag)}
-                      className={`flex-1 flex items-center justify-between px-2 py-1.5 rounded-lg text-sm transition-colors ${
-                        filterTags.includes(tag)
-                          ? 'bg-gray-900 text-white font-medium'
-                          : 'text-gray-500 hover:bg-white hover:text-gray-800'
-                      }`}>
+                    <button onClick={() => onFilter({ type: 'tag', value: tag })}
+                      className={`flex-1 flex items-center justify-between px-2 py-1.5 rounded-lg text-sm ${isActive('tag', tag) ? 'bg-white text-gray-900 font-medium' : 'text-gray-500 hover:bg-white hover:text-gray-800'}`}>
                       <span className="truncate"># {tag}</span>
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1 ${
-                        filterTags.includes(tag) ? 'bg-white/20 text-white' : 'bg-blue-50 text-blue-700'
-                      }`}>{count}</span>
+                      <span className="text-xs bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded-full flex-shrink-0 ml-1">{count}</span>
                     </button>
                     {hoveredTag === `global_${tag}` && !renaming && (
                       <button onClick={(e) => { e.stopPropagation(); setEditingTag(`global_${tag}`) }} className="flex-shrink-0 w-6 h-6 flex items-center justify-center text-gray-300 hover:text-gray-600 mr-1">
