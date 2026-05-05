@@ -116,11 +116,11 @@ export default function BoardPage() {
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
         <button
-          onClick={() => { handleFilter({ type: 'all', value: '' }); setSearch('') }}
+          onClick={() => { setFilterUploader(null); setFilterTags([]); setSearch('') }}
           className="flex items-center gap-2 font-medium text-gray-900 hover:opacity-70 transition-opacity"
         >
-          <img src="/logo.png" alt="로고" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-          닥터포헤어 레퍼런스 보드
+          <img src="/logo_b.png" alt="로고" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
+          해외 레퍼런스 보드
         </button>
         <div className="flex-1">
           <input type="text" placeholder="이미지, 태그, 플랫폼, 브랜드로 검색..." value={search}
