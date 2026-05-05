@@ -8,9 +8,8 @@ import ImageModal from '@/components/ImageModal'
 import UploadModal from '@/components/UploadModal'
 
 type Filter = {
-  type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag' | 'brand_tag'
+  type: 'all' | 'uploader' | 'platform' | 'brand'
   value: string
-  value2?: string  // brand_tag일 때 tag값
 }
 
 export default function BoardPage() {
@@ -18,6 +17,7 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>({ type: 'all', value: '' })
+  const [filterTags, setFilterTags] = useState<string[]>([])
   const [selectedImage, setSelectedImage] = useState<Image | null>(null)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -40,6 +40,15 @@ export default function BoardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
+  const toggleTag = (tag: string) => {
+    setFilterTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
+  }
+
+  const handleFilter = (f: Filter) => {
+    setFilter(f)
+    if (f.type === 'all') setFilterTags([])
+  }
+
   const filtered = images.filter((img) => {
     const q = search.toLowerCase()
     const matchSearch = !q ||
@@ -53,13 +62,13 @@ export default function BoardPage() {
     if (filter.type === 'uploader') matchFilter = img.uploader === filter.value
     else if (filter.type === 'platform') matchFilter = img.platform === filter.value
     else if (filter.type === 'brand') matchFilter = img.brand === filter.value
-    else if (filter.type === 'tag') matchFilter = img.tags.includes(filter.value)
-    else if (filter.type === 'brand_tag') matchFilter = img.brand === filter.value && img.tags.includes(filter.value2 ?? '')
 
-    return matchSearch && matchFilter
+    const matchTags = filterTags.length === 0 || filterTags.every(t => img.tags.includes(t))
+
+    return matchSearch && matchFilter && matchTags
   })
 
-  // 플랫폼 > 브랜드 > 태그 계층 구조 생성
+  // 플랫폼 > 브랜드 > 태그 계층 구조
   const hierarchy: { [platform: string]: { [brand: string]: string[] } } = {}
   for (const img of images) {
     const p = img.platform || '(미분류)'
@@ -70,14 +79,12 @@ export default function BoardPage() {
       if (!hierarchy[p][b].includes(tag)) hierarchy[p][b].push(tag)
     }
   }
-  // (미분류)는 맨 뒤로
   const sortedHierarchy: typeof hierarchy = {}
   Object.keys(hierarchy).filter(k => k !== '(미분류)').sort().forEach(k => sortedHierarchy[k] = hierarchy[k])
   if (hierarchy['(미분류)']) sortedHierarchy['(미분류)'] = hierarchy['(미분류)']
 
   const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
 
-  // 전체 태그 + 사용 횟수
   const tagCountMap: { [tag: string]: number } = {}
   for (const img of images) {
     for (const tag of img.tags) {
@@ -101,17 +108,20 @@ export default function BoardPage() {
       body: JSON.stringify({ oldTag, newTag }),
     })
     if (!res.ok) { const data = await res.json(); alert(data.error || '태그 수정 실패'); return }
-    if (filter.type === 'tag' && filter.value === oldTag) setFilter({ type: 'tag', value: newTag })
+    setFilterTags(prev => prev.map(t => t === oldTag ? newTag : t))
     await fetchImages()
   }
 
   return (
     <div className="flex flex-col h-screen">
       <header className="flex items-center gap-3 px-4 py-3 border-b border-gray-200 bg-white">
-        <div className="flex items-center gap-2 font-medium text-gray-900">
+        <button
+          onClick={() => { handleFilter({ type: 'all', value: '' }); setSearch('') }}
+          className="flex items-center gap-2 font-medium text-gray-900 hover:opacity-70 transition-opacity"
+        >
           <img src="/logo.png" alt="로고" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-          해외 레퍼런스 보드
-        </div>
+          닥터포헤어 레퍼런스 보드
+        </button>
         <div className="flex-1">
           <input type="text" placeholder="이미지, 태그, 플랫폼, 브랜드로 검색..." value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -132,11 +142,28 @@ export default function BoardPage() {
           allTags={allTags}
           totalCount={images.length}
           filter={filter}
-          onFilter={setFilter}
+          filterTags={filterTags}
+          onFilter={handleFilter}
+          onToggleTag={toggleTag}
           onRenameTag={handleRenameTag}
         />
 
         <main className="flex-1 overflow-y-auto p-4">
+          {filterTags.length > 0 && (
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="text-xs text-gray-400">태그 필터:</span>
+              {filterTags.map(tag => (
+                <button key={tag} onClick={() => toggleTag(tag)}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors">
+                  # {tag} <span className="opacity-70">×</span>
+                </button>
+              ))}
+              <button onClick={() => setFilterTags([])} className="text-xs text-gray-400 hover:text-gray-600 underline">
+                전체 해제
+              </button>
+            </div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center h-64 text-gray-400 text-sm">불러오는 중...</div>
           ) : filtered.length === 0 ? (
@@ -148,9 +175,17 @@ export default function BoardPage() {
               </button>
             </div>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px', alignItems: 'start' }}>
+            <div style={{ columnCount: 5, columnGap: '12px' }}>
               {filtered.map((img) => (
-                <ImageCard key={img.id} image={img} uploaders={uploaders} onClick={() => setSelectedImage(img)} />
+                <ImageCard
+                  key={img.id}
+                  image={img}
+                  uploaders={uploaders}
+                  onClick={() => setSelectedImage(img)}
+                  onTagClick={(tag) => {
+                    setFilterTags(prev => prev.includes(tag) ? prev : [...prev, tag])
+                  }}
+                />
               ))}
             </div>
           )}
@@ -158,8 +193,15 @@ export default function BoardPage() {
       </div>
 
       {selectedImage && (
-        <ImageModal image={selectedImage} onClose={() => setSelectedImage(null)}
-          onDeleted={async () => { await fetchImages(); setSelectedImage(null) }} />
+        <ImageModal
+          image={selectedImage}
+          onClose={() => setSelectedImage(null)}
+          onDeleted={async () => { await fetchImages(); setSelectedImage(null) }}
+          onTagClick={(tag) => {
+            setFilterTags(prev => prev.includes(tag) ? prev : [...prev, tag])
+            setSelectedImage(null)
+          }}
+        />
       )}
       {uploadOpen && (
         <UploadModal onClose={() => setUploadOpen(false)} onUploaded={() => { setUploadOpen(false); fetchImages() }} />
