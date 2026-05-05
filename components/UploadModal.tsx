@@ -71,7 +71,7 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
       if (data) {
         setExistingPlatforms(Array.from(new Set(data.map((d) => d.platform).filter(Boolean))))
         setExistingBrands(Array.from(new Set(data.map((d) => d.brand).filter(Boolean))))
-        setExistingTags(Array.from(new Set(data.flatMap((d) => d.tags).filter(Boolean))))
+        setExistingTags(Array.from(new Set(data.flatMap((d) => d.tags).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ko")))
       }
     }
     fetchExisting()

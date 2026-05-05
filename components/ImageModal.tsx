@@ -19,6 +19,10 @@ function tagColor(tag: string) {
   return TAG_COLORS[hash]
 }
 
+function sortTags(tags: string[]) {
+  return [...tags].sort((a, b) => a.localeCompare(b, 'ko'))
+}
+
 type Props = {
   image: ImageType
   onClose: () => void
@@ -32,18 +36,24 @@ export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Pr
   const [selectedTags, setSelectedTags] = useState<string[]>(image.tags)
   const [tagInput, setTagInput] = useState('')
   const [memoInput, setMemoInput] = useState(image.memo || '')
+  const [platformInput, setPlatformInput] = useState(image.platform || '')
+  const [brandInput, setBrandInput] = useState(image.brand || '')
   const [saving, setSaving] = useState(false)
   const [existingTags, setExistingTags] = useState<string[]>([])
+  const [existingPlatforms, setExistingPlatforms] = useState<string[]>([])
+  const [existingBrands, setExistingBrands] = useState<string[]>([])
 
   useEffect(() => {
-    const fetch = async () => {
-      const { data } = await supabase.from('images').select('tags')
+    const fetchExisting = async () => {
+      const { data } = await supabase.from('images').select('tags, platform, brand')
       if (data) {
-        const all = Array.from(new Set(data.flatMap((d) => d.tags))) as string[]
-        setExistingTags(all)
+        const allTags = Array.from(new Set(data.flatMap((d) => d.tags))) as string[]
+        setExistingTags(sortTags(allTags))
+        setExistingPlatforms(Array.from(new Set(data.map((d) => d.platform).filter(Boolean))))
+        setExistingBrands(Array.from(new Set(data.map((d) => d.brand).filter(Boolean))))
       }
     }
-    fetch()
+    fetchExisting()
   }, [])
 
   const toggleTag = (tag: string) => {
@@ -70,7 +80,12 @@ export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Pr
     setSaving(true)
     const { error } = await supabase
       .from('images')
-      .update({ tags: selectedTags, memo: memoInput })
+      .update({
+        tags: selectedTags,
+        memo: memoInput,
+        platform: platformInput.trim(),
+        brand: brandInput.trim(),
+      })
       .eq('id', image.id)
     if (!error) {
       setSaving(false)
@@ -82,17 +97,21 @@ export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Pr
     }
   }
 
-  const date = new Date(image.created_at).toLocaleDateString('ko-KR', {
-    year: 'numeric', month: 'long', day: 'numeric',
-  })
+  const handleCancel = () => {
+    setEditing(false)
+    setSelectedTags(image.tags)
+    setMemoInput(image.memo || '')
+    setPlatformInput(image.platform || '')
+    setBrandInput(image.brand || '')
+  }
 
-  const allTags = Array.from(new Set([...existingTags, ...selectedTags]))
+  const allTags = sortTags(Array.from(new Set([...existingTags, ...selectedTags])))
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
       <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden flex" style={{ height: '90vh' }} onClick={(e) => e.stopPropagation()}>
 
-        {/* 왼쪽: 이미지 영역 */}
+        {/* 왼쪽: 이미지 */}
         <div className="relative flex-1 min-w-0 bg-white flex items-center justify-center" style={{ height: '90vh' }}>
           <Image
             src={image.url}
@@ -113,109 +132,159 @@ export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Pr
 
         {/* 오른쪽: 정보 패널 */}
         <div className="w-56 flex-shrink-0 border-l border-gray-200 flex flex-col overflow-y-auto">
+
+          {/* 헤더: 플랫폼/브랜드 + 버튼 */}
           <div className="p-4 border-b border-gray-200">
-            <p className="font-medium text-gray-900 text-sm">{image.name}</p>
-            <p className="text-xs text-gray-400 mt-0.5">{image.uploader} · {date}</p>
-            <div className="flex gap-1.5 mt-3">
-              <a href={image.url} target="_blank" rel="noopener noreferrer" className="flex-1 text-center text-xs py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+            {(image.platform || image.brand) ? (
+              <div className="mb-2">
+                {image.platform && (
+                  <p className="text-xs text-gray-400">{image.platform}</p>
+                )}
+                {image.brand && (
+                  <p className="text-sm font-medium text-gray-900">{image.brand}</p>
+                )}
+              </div>
+            ) : (
+              <p className="text-sm text-gray-400 mb-2">(플랫폼 미지정)</p>
+            )}
+            <div className="flex gap-1.5">
+              <a href={image.url} target="_blank" rel="noopener noreferrer"
+                className="flex-1 text-center text-xs py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                 원본 보기
               </a>
               {!editing && (
-                <button onClick={() => setEditing(true)} className="flex-1 text-xs py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                <button onClick={() => setEditing(true)}
+                  className="flex-1 text-xs py-1.5 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
                   수정
                 </button>
               )}
-              <button onClick={handleDelete} disabled={deleting} className="flex-1 text-xs py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
+              <button onClick={handleDelete} disabled={deleting}
+                className="flex-1 text-xs py-1.5 border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
                 {deleting ? '...' : '삭제'}
               </button>
             </div>
           </div>
 
+          {/* 본문 */}
           <div className="p-4 flex-1">
-          {editing ? (
-            <div className="space-y-4">
-              <div>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">태그</p>
-                {allTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mb-2">
-                    {allTags.map((t) => (
-                      <button
-                        key={t}
-                        onClick={() => toggleTag(t)}
-                        className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
-                          selectedTags.includes(t)
-                            ? tagColor(t) + ' border-transparent font-medium'
-                            : 'border-gray-200 text-gray-500 hover:bg-gray-50'
-                        }`}
-                      >
-                        {t}
-                      </button>
-                    ))}
-                  </div>
-                )}
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={tagInput}
-                    onChange={(e) => setTagInput(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && addCustomTag()}
-                    placeholder="새 태그 입력 후 Enter"
-                    className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none"
-                  />
-                  <button onClick={addCustomTag} className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">추가</button>
-                </div>
-                {selectedTags.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 mt-2">
-                    {selectedTags.map((t) => (
-                      <span key={t} className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${tagColor(t)}`}>
-                        {t}
-                        <button onClick={() => setSelectedTags(selectedTags.filter((x) => x !== t))} className="opacity-60 hover:opacity-100">×</button>
-                      </span>
-                    ))}
-                  </div>
-                )}
-              </div>
-              <div>
-                <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">메모</p>
-                <textarea
-                  value={memoInput}
-                  onChange={(e) => setMemoInput(e.target.value)}
-                  rows={2}
-                  placeholder="메모를 입력하세요..."
-                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none resize-none"
-                />
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => { setEditing(false); setSelectedTags(image.tags); setMemoInput(image.memo || '') }} className="flex-1 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">취소</button>
-                <button onClick={handleSave} disabled={saving} className="flex-1 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
-                  {saving ? '저장 중...' : '저장'}
-                </button>
-              </div>
-            </div>
-          ) : (
-            <>
-              {memoInput && (
-                <div className="mb-3 p-3 bg-gray-50 rounded-lg">
-                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">메모</p>
-                  <p className="text-sm text-gray-700 whitespace-pre-wrap">{memoInput}</p>
-                </div>
-              )}
-              {selectedTags.length > 0 && (
+            {editing ? (
+              <div className="space-y-4">
+
+                {/* 플랫폼 */}
                 <div>
-                  <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-1.5">태그</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {selectedTags.map((tag) => (
-                      <span
-                        key={tag}
-                        onClick={() => { onTagClick?.(tag); onClose() }}
-                        className={`text-xs px-2 py-1 rounded-full cursor-pointer hover:opacity-70 transition-opacity ${tagColor(tag)}`}
-                      >{tag}</span>
-                    ))}
-                  </div>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1.5">플랫폼</p>
+                  {existingPlatforms.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {existingPlatforms.map((p) => (
+                        <button key={p} onClick={() => setPlatformInput(p)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                            platformInput === p ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                          }`}>
+                          {p}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <input type="text" value={platformInput} onChange={(e) => setPlatformInput(e.target.value)}
+                    placeholder="직접 입력"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none" />
                 </div>
-              )}
-            </>
-          )}
+
+                {/* 브랜드 */}
+                <div>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1.5">브랜드</p>
+                  {existingBrands.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {existingBrands.map((b) => (
+                        <button key={b} onClick={() => setBrandInput(b)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                            brandInput === b ? 'bg-gray-900 text-white border-gray-900' : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                          }`}>
+                          {b}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <input type="text" value={brandInput} onChange={(e) => setBrandInput(e.target.value)}
+                    placeholder="직접 입력"
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none" />
+                </div>
+
+                {/* 태그 */}
+                <div>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1.5">태그</p>
+                  {allTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mb-2">
+                      {allTags.map((t) => (
+                        <button key={t} onClick={() => toggleTag(t)}
+                          className={`text-xs px-2.5 py-1 rounded-full border transition-colors ${
+                            selectedTags.includes(t)
+                              ? tagColor(t) + ' border-transparent font-medium'
+                              : 'border-gray-200 text-gray-500 hover:bg-gray-50'
+                          }`}>
+                          {t}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <input type="text" value={tagInput} onChange={(e) => setTagInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && addCustomTag()}
+                      placeholder="새 태그 입력 후 Enter"
+                      className="flex-1 px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none" />
+                    <button onClick={addCustomTag} className="px-3 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">추가</button>
+                  </div>
+                  {selectedTags.length > 0 && (
+                    <div className="flex flex-wrap gap-1.5 mt-2">
+                      {sortTags(selectedTags).map((t) => (
+                        <span key={t} className={`text-xs px-2 py-0.5 rounded-full flex items-center gap-1 ${tagColor(t)}`}>
+                          {t}
+                          <button onClick={() => setSelectedTags(selectedTags.filter((x) => x !== t))} className="opacity-60 hover:opacity-100">×</button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* 메모 */}
+                <div>
+                  <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1.5">메모</p>
+                  <textarea value={memoInput} onChange={(e) => setMemoInput(e.target.value)}
+                    rows={2} placeholder="메모를 입력하세요..."
+                    className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-gray-400 outline-none resize-none" />
+                </div>
+
+                <div className="flex gap-2">
+                  <button onClick={handleCancel} className="flex-1 py-2 text-sm border border-gray-200 rounded-lg hover:bg-gray-50">취소</button>
+                  <button onClick={handleSave} disabled={saving} className="flex-1 py-2 text-sm bg-gray-900 text-white rounded-lg hover:bg-gray-700 disabled:opacity-50">
+                    {saving ? '저장 중...' : '저장'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <>
+                {memoInput && (
+                  <div className="mb-3 p-3 bg-gray-50 rounded-lg">
+                    <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-1">메모</p>
+                    <p className="text-sm text-gray-700 whitespace-pre-wrap">{memoInput}</p>
+                  </div>
+                )}
+                {selectedTags.length > 0 && (
+                  <div>
+                    <p className="text-xs text-gray-400 uppercase tracking-wide font-medium mb-1.5">태그</p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {sortTags(selectedTags).map((tag) => (
+                        <span key={tag}
+                          onClick={() => { onTagClick?.(tag); onClose() }}
+                          className={`text-xs px-2 py-1 rounded-full cursor-pointer hover:opacity-70 transition-opacity ${tagColor(tag)}`}>
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>
