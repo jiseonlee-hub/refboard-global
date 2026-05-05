@@ -149,16 +149,30 @@ export default function BoardPage() {
         />
 
         <main className="flex-1 overflow-y-auto p-4">
-          {filterTags.length > 0 && (
+          {(filter.type !== 'all' || filterTags.length > 0) && (
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-              <span className="text-xs text-gray-400">태그 필터:</span>
+              {/* 플랫폼/브랜드 필터 뱃지 */}
+              {filter.type === 'platform' && (
+                <button onClick={() => handleFilter({ type: 'all', value: '' })}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors">
+                  📁 {filter.value} <span className="opacity-70">×</span>
+                </button>
+              )}
+              {filter.type === 'brand' && (
+                <button onClick={() => handleFilter({ type: 'all', value: '' })}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-500 text-white rounded-full hover:bg-gray-600 transition-colors">
+                  ○ {filter.value} <span className="opacity-70">×</span>
+                </button>
+              )}
+              {/* 태그 필터 뱃지 */}
               {filterTags.map(tag => (
                 <button key={tag} onClick={() => toggleTag(tag)}
                   className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors">
                   # {tag} <span className="opacity-70">×</span>
                 </button>
               ))}
-              <button onClick={() => setFilterTags([])} className="text-xs text-gray-400 hover:text-gray-600 underline">
+              <button onClick={() => { handleFilter({ type: 'all', value: '' }); setFilterTags([]) }}
+                className="text-xs text-gray-400 hover:text-gray-600 underline">
                 전체 해제
               </button>
             </div>
