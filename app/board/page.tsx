@@ -120,7 +120,7 @@ export default function BoardPage() {
           className="flex items-center gap-2 font-medium text-gray-900 hover:opacity-70 transition-opacity"
         >
           <img src="/logo.png" alt="로고" style={{ width: '28px', height: '28px', objectFit: 'contain' }} />
-          닥터포헤어 레퍼런스 보드
+          해외 레퍼런스 보드
         </button>
         <div className="flex-1">
           <input type="text" placeholder="이미지, 태그, 플랫폼, 브랜드로 검색..." value={search}
