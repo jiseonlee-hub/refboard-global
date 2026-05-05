@@ -8,9 +8,8 @@ import ImageModal from '@/components/ImageModal'
 import UploadModal from '@/components/UploadModal'
 
 type Filter = {
-  type: 'all' | 'uploader' | 'platform' | 'brand' | 'tag' | 'brand_tag'
+  type: 'all' | 'uploader' | 'platform' | 'brand'
   value: string
-  value2?: string  // brand_tag일 때 tag값
 }
 
 export default function BoardPage() {
@@ -18,6 +17,7 @@ export default function BoardPage() {
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [filter, setFilter] = useState<Filter>({ type: 'all', value: '' })
+  const [selectedTags, setSelectedTags] = useState<string[]>([])
   const [selectedImage, setSelectedImage] = useState<Image | null>(null)
   const [uploadOpen, setUploadOpen] = useState(false)
   const [copied, setCopied] = useState(false)
@@ -40,6 +40,17 @@ export default function BoardPage() {
     return () => { supabase.removeChannel(channel) }
   }, [])
 
+  const toggleTag = (tag: string) => {
+    setSelectedTags(prev =>
+      prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag]
+    )
+  }
+
+  const handleFilter = (f: Filter) => {
+    setFilter(f)
+    if (f.type === 'all') setSelectedTags([])
+  }
+
   const filtered = images.filter((img) => {
     const q = search.toLowerCase()
     const matchSearch = !q ||
@@ -53,13 +64,13 @@ export default function BoardPage() {
     if (filter.type === 'uploader') matchFilter = img.uploader === filter.value
     else if (filter.type === 'platform') matchFilter = img.platform === filter.value
     else if (filter.type === 'brand') matchFilter = img.brand === filter.value
-    else if (filter.type === 'tag') matchFilter = img.tags.includes(filter.value)
-    else if (filter.type === 'brand_tag') matchFilter = img.brand === filter.value && img.tags.includes(filter.value2 ?? '')
 
-    return matchSearch && matchFilter
+    // 태그 다중 선택: 선택된 태그를 모두 포함하는 카드만 (AND)
+    const matchTags = selectedTags.length === 0 || selectedTags.every(t => img.tags.includes(t))
+
+    return matchSearch && matchFilter && matchTags
   })
 
-  // 플랫폼 > 브랜드 > 태그 계층 구조 생성
   const hierarchy: { [platform: string]: { [brand: string]: string[] } } = {}
   for (const img of images) {
     const p = img.platform || '(미분류)'
@@ -70,14 +81,12 @@ export default function BoardPage() {
       if (!hierarchy[p][b].includes(tag)) hierarchy[p][b].push(tag)
     }
   }
-  // (미분류)는 맨 뒤로
   const sortedHierarchy: typeof hierarchy = {}
   Object.keys(hierarchy).filter(k => k !== '(미분류)').sort().forEach(k => sortedHierarchy[k] = hierarchy[k])
   if (hierarchy['(미분류)']) sortedHierarchy['(미분류)'] = hierarchy['(미분류)']
 
   const uploaders = Array.from(new Set(images.map((i) => i.uploader)))
 
-  // 전체 태그 + 사용 횟수
   const tagCountMap: { [tag: string]: number } = {}
   for (const img of images) {
     for (const tag of img.tags) {
@@ -101,7 +110,7 @@ export default function BoardPage() {
       body: JSON.stringify({ oldTag, newTag }),
     })
     if (!res.ok) { const data = await res.json(); alert(data.error || '태그 수정 실패'); return }
-    if (filter.type === 'tag' && filter.value === oldTag) setFilter({ type: 'tag', value: newTag })
+    setSelectedTags(prev => prev.map(t => t === oldTag ? newTag : t))
     await fetchImages()
   }
 
@@ -132,11 +141,29 @@ export default function BoardPage() {
           allTags={allTags}
           totalCount={images.length}
           filter={filter}
-          onFilter={setFilter}
+          selectedTags={selectedTags}
+          onFilter={handleFilter}
+          onToggleTag={toggleTag}
           onRenameTag={handleRenameTag}
         />
 
         <main className="flex-1 overflow-y-auto p-4">
+          {selectedTags.length > 0 && (
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="text-xs text-gray-400">태그 필터:</span>
+              {selectedTags.map(tag => (
+                <button key={tag} onClick={() => toggleTag(tag)}
+                  className="flex items-center gap-1 text-xs px-2.5 py-1 bg-gray-900 text-white rounded-full hover:bg-gray-700 transition-colors">
+                  # {tag} <span className="opacity-70">×</span>
+                </button>
+              ))}
+              <button onClick={() => setSelectedTags([])}
+                className="text-xs text-gray-400 hover:text-gray-600 underline">
+                전체 해제
+              </button>
+            </div>
+          )}
+
           {loading ? (
             <div className="flex items-center justify-center h-64 text-gray-400 text-sm">불러오는 중...</div>
           ) : filtered.length === 0 ? (
