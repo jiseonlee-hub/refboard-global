@@ -1,6 +1,5 @@
 'use client'
 
-import Image from 'next/image'
 import type { Image as ImageType } from '@/lib/supabase'
 import { supabase } from '@/lib/supabase'
 import { useState, useEffect } from 'react'
@@ -109,18 +108,15 @@ export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Pr
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={onClose}>
-      <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden flex" style={{ height: '90vh' }} onClick={(e) => e.stopPropagation()}>
+      <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-4xl mx-4 overflow-hidden flex" style={{ maxHeight: '90vh' }} onClick={(e) => e.stopPropagation()}>
 
         {/* 왼쪽: 이미지 */}
-        <div className="relative flex-1 min-w-0 bg-white flex items-center justify-center" style={{ height: '90vh' }}>
-          <Image
+        <div className="relative flex-1 min-w-0 bg-white flex items-center justify-center overflow-hidden">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
             src={image.url}
             alt={image.name}
-            width={1200}
-            height={900}
-            className="w-full h-full"
-            style={{ objectFit: 'contain' }}
-            unoptimized
+            style={{ display: 'block', maxWidth: '100%', maxHeight: '90vh', width: 'auto', height: 'auto' }}
           />
           <button
             onClick={onClose}
@@ -131,7 +127,7 @@ export default function ImageModal({ image, onClose, onDeleted, onTagClick }: Pr
         </div>
 
         {/* 오른쪽: 정보 패널 */}
-        <div className="w-56 flex-shrink-0 border-l border-gray-200 flex flex-col overflow-y-auto">
+        <div className="w-56 flex-shrink-0 border-l border-gray-200 flex flex-col overflow-y-auto" style={{ maxHeight: '90vh' }}>
 
           {/* 헤더: 플랫폼/브랜드 + 버튼 */}
           <div className="p-4 border-b border-gray-200">
