@@ -62,10 +62,11 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
   const [existingPlatforms, setExistingPlatforms] = useState<string[]>([])
   const [existingBrands, setExistingBrands] = useState<string[]>([])
   const [existingTags, setExistingTags] = useState<string[]>([])
+  const [pasteHint, setPasteHint] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchExisting = async () => {
       const { data } = await supabase.from('images').select('platform, brand, tags')
       if (data) {
         setExistingPlatforms(Array.from(new Set(data.map((d) => d.platform).filter(Boolean))))
@@ -73,7 +74,29 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
         setExistingTags(Array.from(new Set(data.flatMap((d) => d.tags).filter(Boolean))))
       }
     }
-    fetch()
+    fetchExisting()
+  }, [])
+
+  // 클립보드 붙여넣기 지원
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+      const imageFiles: File[] = []
+      for (const item of Array.from(items)) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile()
+          if (file) imageFiles.push(file)
+        }
+      }
+      if (imageFiles.length > 0) {
+        setFiles(prev => [...prev, ...imageFiles])
+        setPasteHint(true)
+        setTimeout(() => setPasteHint(false), 2000)
+      }
+    }
+    window.addEventListener('paste', handlePaste)
+    return () => window.removeEventListener('paste', handlePaste)
   }, [])
 
   const toggleTag = (tag: string) => setTags(prev => prev.includes(tag) ? prev.filter(t => t !== tag) : [...prev, tag])
@@ -83,6 +106,8 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
     e.preventDefault()
     setFiles(prev => [...prev, ...Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'))])
   }
+
+  const removeFile = (idx: number) => setFiles(prev => prev.filter((_, i) => i !== idx))
 
   const handleSubmit = async () => {
     if (files.length === 0) { setError('이미지를 선택해주세요'); return }
@@ -107,8 +132,13 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
       <div className="bg-white rounded-2xl border border-gray-200 w-full max-w-md mx-4 p-5 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <h2 className="text-base font-medium text-gray-900 mb-4">이미지 업로드</h2>
 
-        <div onDrop={handleDrop} onDragOver={(e) => e.preventDefault()} onClick={() => fileRef.current?.click()}
-          className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors mb-4">
+        {/* 드롭존 */}
+        <div
+          onDrop={handleDrop}
+          onDragOver={(e) => e.preventDefault()}
+          onClick={() => fileRef.current?.click()}
+          className="border-2 border-dashed border-gray-200 rounded-xl p-5 text-center cursor-pointer hover:border-blue-300 hover:bg-blue-50 transition-colors mb-2"
+        >
           {files.length > 0 ? (
             <div>
               <p className="text-sm font-medium text-gray-700">{files.length}개 파일 선택됨</p>
@@ -122,6 +152,32 @@ export default function UploadModal({ onClose, onUploaded }: Props) {
           )}
           <input ref={fileRef} type="file" accept="image/*" multiple className="hidden" onChange={(e) => setFiles(Array.from(e.target.files || []))} />
         </div>
+
+        {/* 붙여넣기 안내 */}
+        <p className={`text-xs text-center mb-3 transition-colors ${pasteHint ? 'text-green-600 font-medium' : 'text-gray-400'}`}>
+          {pasteHint ? '✓ 이미지가 붙여넣어졌어요!' : '또는 Cmd+V / Ctrl+V 로 붙여넣기'}
+        </p>
+
+        {/* 선택된 파일 미리보기 목록 */}
+        {files.length > 0 && (
+          <div className="flex flex-wrap gap-2 mb-3">
+            {files.map((f, i) => (
+              <div key={i} className="relative group">
+                <img
+                  src={URL.createObjectURL(f)}
+                  alt={f.name}
+                  className="w-16 h-16 object-cover rounded-lg border border-gray-200"
+                />
+                <button
+                  onClick={(e) => { e.stopPropagation(); removeFile(i) }}
+                  className="absolute -top-1.5 -right-1.5 w-4 h-4 bg-gray-800 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
 
         <PillInput label="플랫폼" hint="(예: 세포라, 올리브영)" value={platform} onSet={setPlatform} inputVal={platformInput} setInputVal={setPlatformInput} existing={existingPlatforms} />
         <PillInput label="브랜드" hint="(예: 나이키, 라네즈)" value={brand} onSet={setBrand} inputVal={brandInput} setInputVal={setBrandInput} existing={existingBrands} />
